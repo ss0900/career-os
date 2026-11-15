@@ -16,6 +16,8 @@ export function createRepository(database: CareerDatabase) {
         careers: await database.careers.orderBy('updatedAt').reverse().toArray(),
         projects: await database.projects.orderBy('updatedAt').reverse().toArray(),
         settings: await database.settings.get('settings'),
+        resumes: await database.resumes.orderBy('updatedAt').reverse().toArray(),
+        resumeVersions: await database.resumeVersions.orderBy('createdAt').reverse().toArray(),
       }));
     },
     async saveProfile(input: ProfileInput) {
