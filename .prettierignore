@@ -1,0 +1,8 @@
+node_modules
+dist
+references
+private
+backups
+package-lock.json
+test-results
+playwright-report
