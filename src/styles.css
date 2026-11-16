@@ -1751,7 +1751,7 @@ textarea.input {
     position: fixed;
     inset: auto 0 0;
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(5, minmax(0, 1fr));
     background: #fffffffa;
     backdrop-filter: blur(10px);
     border-top: 1px solid #e1e6ef;

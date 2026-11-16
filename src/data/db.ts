@@ -2,7 +2,7 @@ import Dexie, { type Table } from 'dexie';
 import type { AppSettings, Career, Profile, Project } from './schema';
 import type { Resume, ResumeVersion } from './resume-schema';
 
-// Schema v1 is created on first use; later structural changes require a new version.
+// Retain v1 for existing databases; new databases open with the latest schema.
 export class CareerDatabase extends Dexie {
   profiles!: Table<Profile, string>;
   careers!: Table<Career, string>;

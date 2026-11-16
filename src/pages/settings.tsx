@@ -18,7 +18,7 @@ import { useAppData, useNotice } from '../hooks/app-context';
 import { dateLabel, errorMessage } from '../lib/utils';
 
 export function SettingsPage() {
-  const { profile, careers, projects, settings } = useAppData();
+  const { profile, careers, projects, settings, resumes, resumeVersions } = useAppData();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [pending, setPending] = useState<Backup | null>(null);
@@ -81,10 +81,18 @@ export function SettingsPage() {
                 <strong>{projects.length}</strong>
                 <span>프로젝트</span>
               </div>
+              <div>
+                <strong>{resumes.length}</strong>
+                <span>이력서</span>
+              </div>
+              <div>
+                <strong>{resumeVersions.length}</strong>
+                <span>보관 버전</span>
+              </div>
             </div>
             <p className="storage-note">
               <HardDrive size={16} />
-              IndexedDB · 로컬 저장소 · 스키마 v1
+              IndexedDB · 로컬 저장소 · 스키마 v2
             </p>
           </section>
           <section className="panel backup-settings">
@@ -106,7 +114,7 @@ export function SettingsPage() {
               </span>
               <div>
                 <h3>JSON 파일로 내보내기</h3>
-                <p>프로필, 경력, 프로젝트를 하나의 파일에 담습니다.</p>
+                <p>프로필, 경력, 프로젝트, 이력서와 제출본을 함께 보관합니다.</p>
                 <small>최근 다운로드 요청 · {dateLabel(settings?.lastBackupAt ?? undefined)}</small>
               </div>
               <Button variant="outline" onClick={() => void exportData()} disabled={busy}>
@@ -120,7 +128,7 @@ export function SettingsPage() {
               <div>
                 <h3>백업 파일 가져오기</h3>
                 <p>복원 시 현재 데이터를 백업 내용으로 교체합니다.</p>
-                <small>Career OS v1 JSON · 최대 5MB</small>
+                <small>Career OS v1 / v2 JSON · 최대 5MB</small>
               </div>
               <Button variant="outline" onClick={() => fileRef.current?.click()} disabled={busy}>
                 파일 선택
@@ -148,7 +156,7 @@ export function SettingsPage() {
           <section className="panel roadmap-panel">
             <div className="section-heading">
               <h2>Career OS 개발 로드맵</h2>
-              <span className="badge">v0.1</span>
+              <span className="badge">v0.2</span>
             </div>
             <div className="roadmap-row">
               <span className="roadmap-step complete">
@@ -159,8 +167,16 @@ export function SettingsPage() {
                 <p>프로필, 경력, 프로젝트 관리와 백업 · 현재 제공</p>
               </div>
             </div>
+            <div className="roadmap-row">
+              <span className="roadmap-step complete">
+                <Check size={16} />
+              </span>
+              <div>
+                <h3>Phase 2 · 이력서 시스템</h3>
+                <p>맞춤 초안, A4/PDF, 불변 제출본, 버전 비교 · 현재 제공</p>
+              </div>
+            </div>
             {[
-              ['02', '이력서 시스템', '프로젝트 선택, A4 미리보기, PDF, 제출 버전'],
               ['03', '이직 관리', '채용공고 분석, 지원 보드, 일정 관리'],
               ['04', '면접과 포트폴리오', 'STAR 답변, 프롬프트 생성, 공개 포트폴리오'],
             ].map(([step, title, description]) => (
@@ -205,7 +221,7 @@ export function SettingsPage() {
         <ConfirmDialog
           title="백업으로 데이터를 교체할까요?"
           confirmLabel="백업으로 교체"
-          description={`${dateLabel(pending.exportedAt)} 백업: 프로필 ${pending.data.profiles.length}개, 경력 ${pending.data.careers.length}개, 프로젝트 ${pending.data.projects.length}개. 현재 프로필 ${profile ? 1 : 0}개, 경력 ${careers.length}개, 프로젝트 ${projects.length}개가 모두 교체됩니다. 현재 데이터를 먼저 백업했는지 확인해 주세요.`}
+          description={`${dateLabel(pending.exportedAt)} v${pending.schemaVersion} 백업: 프로필 ${pending.data.profiles.length}개, 경력 ${pending.data.careers.length}개, 프로젝트 ${pending.data.projects.length}개, 이력서 ${pending.schemaVersion === 2 ? pending.data.resumes.length : 0}개, 보관 버전 ${pending.schemaVersion === 2 ? pending.data.resumeVersions.length : 0}개. 현재 프로필 ${profile ? 1 : 0}개, 경력 ${careers.length}개, 프로젝트 ${projects.length}개, 이력서 ${resumes.length}개와 보관 버전 ${resumeVersions.length}개가 모두 교체됩니다.${pending.schemaVersion === 1 ? ' 특히 v1 백업에는 이력서가 없으므로 현재 초안과 제출본이 모두 삭제됩니다.' : ''} 현재 데이터를 먼저 백업했는지 확인해 주세요.`}
           onClose={() => setPending(null)}
           onConfirm={async () => {
             await restoreBackup(pending);

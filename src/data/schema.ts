@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { resumeSchema, resumeVersionSchema } from './resume-schema';
 
 const shortText = z.string().trim().max(200, '200자 이내로 입력해 주세요.');
 const longText = z.string().trim().max(12000, '12,000자 이내로 입력해 주세요.');
@@ -149,7 +150,7 @@ export const emptyProject: ProjectInput = {
   resourceUrl: '',
 };
 
-export const backupSchema = z
+export const backupV1Schema = z
   .object({
     app: z.literal('career-os'),
     schemaVersion: z.literal(1),
@@ -182,4 +183,57 @@ export const backupSchema = z
       });
     }
   });
+export const backupV2Schema = z
+  .object({
+    app: z.literal('career-os'),
+    schemaVersion: z.literal(2),
+    exportedAt: z.string().datetime(),
+    data: z
+      .object({
+        profiles: z.array(profileSchema).max(1),
+        careers: z.array(careerSchema).max(10000),
+        projects: z.array(projectSchema).max(10000),
+        resumes: z.array(resumeSchema).max(10000),
+        resumeVersions: z.array(resumeVersionSchema).max(10000),
+      })
+      .strict(),
+  })
+  .strict()
+  .superRefine((backup, context) => {
+    const original = backupV1Schema.safeParse({
+      app: backup.app,
+      schemaVersion: 1,
+      exportedAt: backup.exportedAt,
+      data: {
+        profiles: backup.data.profiles,
+        careers: backup.data.careers,
+        projects: backup.data.projects,
+      },
+    });
+    if (!original.success)
+      context.addIssue({ code: 'custom', message: '기존 경력 데이터가 올바르지 않습니다.' });
+    for (const key of ['resumes', 'resumeVersions'] as const) {
+      if (new Set(backup.data[key].map((item) => item.id)).size !== backup.data[key].length)
+        context.addIssue({ code: 'custom', message: '중복된 이력서 ID입니다.' });
+    }
+    const ids = new Set(backup.data.resumes.map((item) => item.id));
+    const numbers = new Set<string>();
+    for (const version of backup.data.resumeVersions) {
+      const key = `${version.resumeId}:${version.number}`;
+      if (!ids.has(version.resumeId) || numbers.has(key))
+        context.addIssue({
+          code: 'custom',
+          message: '이력서 버전의 관계 또는 번호가 잘못되었습니다.',
+        });
+      numbers.add(key);
+    }
+    // Source IDs belong to independent copies, so deleted originals remain valid.
+  });
+export const backupSchema = z.union([backupV1Schema, backupV2Schema]);
 export type Backup = z.infer<typeof backupSchema>;
+export type CurrentBackup = z.infer<typeof backupV2Schema>;
+export function normalizeBackup(backup: Backup): CurrentBackup {
+  return backup.schemaVersion === 2
+    ? backup
+    : { ...backup, schemaVersion: 2, data: { ...backup.data, resumes: [], resumeVersions: [] } };
+}

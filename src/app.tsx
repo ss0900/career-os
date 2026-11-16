@@ -4,12 +4,20 @@ import {
   BriefcaseBusiness,
   ChevronRight,
   FolderKanban,
+  FileText,
   LayoutDashboard,
   LockKeyhole,
   Settings2,
   Sprout,
 } from 'lucide-react';
-import { HashRouter, Link, NavLink, Route, Routes, useLocation } from 'react-router-dom';
+import {
+  createHashRouter,
+  RouterProvider,
+  Outlet,
+  Link,
+  NavLink,
+  useLocation,
+} from 'react-router-dom';
 import { DataProvider, ErrorBoundary, NoticeProvider } from './components/providers';
 import { Button } from './components/ui/button';
 const Dashboard = lazy(() =>
@@ -24,11 +32,18 @@ const ProjectsPage = lazy(() =>
 const SettingsPage = lazy(() =>
   import('./pages/settings').then((module) => ({ default: module.SettingsPage })),
 );
+const ResumesPage = lazy(() =>
+  import('./pages/resumes').then((module) => ({ default: module.ResumesPage })),
+);
+const ResumeEditorPage = lazy(() =>
+  import('./pages/resume-editor').then((module) => ({ default: module.ResumeEditorPage })),
+);
 
 const navigation = [
   { to: '/', label: '대시보드', icon: LayoutDashboard },
   { to: '/career', label: '내 경력', icon: BriefcaseBusiness },
   { to: '/projects', label: '프로젝트', icon: FolderKanban },
+  { to: '/resumes', label: '이력서 작성', icon: FileText },
   { to: '/settings', label: '설정 및 백업', icon: Settings2 },
 ];
 
@@ -36,7 +51,11 @@ function Layout() {
   const location = useLocation();
   const mainRef = useRef<HTMLElement>(null);
   const pageTitle =
-    navigation.find((item) => item.to === location.pathname)?.label ?? '페이지 없음';
+    navigation.find(
+      (item) =>
+        item.to === location.pathname ||
+        (item.to !== '/' && location.pathname.startsWith(item.to + '/')),
+    )?.label ?? '페이지 없음';
   useEffect(() => {
     document.title = `${pageTitle} · Career OS`;
     window.scrollTo(0, 0);
@@ -94,7 +113,7 @@ function Layout() {
           </div>
           <div className="local-label">
             <span className="status-dot" />
-            로컬 워크스페이스<span>v0.1</span>
+            로컬 워크스페이스<span>v0.2</span>
           </div>
         </div>
       </aside>
@@ -124,28 +143,11 @@ function Layout() {
             <Suspense
               fallback={
                 <div className="loading-state" role="status">
-                  ??? ???? ????.
+                  화면을 불러오는 중입니다.
                 </div>
               }
             >
-              <Routes>
-                <Route path="/" element={<Dashboard />} />
-                <Route path="/career" element={<CareerPage />} />
-                <Route path="/projects" element={<ProjectsPage />} />
-                <Route path="/settings" element={<SettingsPage />} />
-                <Route
-                  path="*"
-                  element={
-                    <div className="panel error-state">
-                      <h1>페이지를 찾을 수 없어요</h1>
-                      <p>주소를 확인하거나 대시보드로 돌아가 주세요.</p>
-                      <Button asChild>
-                        <Link to="/">대시보드로 이동</Link>
-                      </Button>
-                    </div>
-                  }
-                />
-              </Routes>
+              <Outlet />
             </Suspense>
           </DataProvider>
         </main>
@@ -154,14 +156,41 @@ function Layout() {
   );
 }
 
+// Data router retains the same hash URLs and enables safe navigation blocking
+// while a draft is waiting for its IndexedDB write.
+const router = createHashRouter([
+  {
+    path: '/',
+    element: <Layout />,
+    children: [
+      { index: true, element: <Dashboard /> },
+      { path: 'career', element: <CareerPage /> },
+      { path: 'projects', element: <ProjectsPage /> },
+      { path: 'resumes', element: <ResumesPage /> },
+      { path: 'resumes/:id', element: <ResumeEditorPage /> },
+      { path: 'settings', element: <SettingsPage /> },
+      {
+        path: '*',
+        element: (
+          <div className="panel error-state">
+            <h1>페이지를 찾을 수 없어요</h1>
+            <p>주소를 확인하거나 대시보드로 돌아가 주세요.</p>
+            <Button asChild>
+              <Link to="/">대시보드로 이동</Link>
+            </Button>
+          </div>
+        ),
+      },
+    ],
+  },
+]);
+
 export default function App() {
   return (
     <ErrorBoundary>
-      <HashRouter>
-        <NoticeProvider>
-          <Layout />
-        </NoticeProvider>
-      </HashRouter>
+      <NoticeProvider>
+        <RouterProvider router={router} />
+      </NoticeProvider>
     </ErrorBoundary>
   );
 }
