@@ -1,6 +1,7 @@
 import { useId, useState, type ReactNode } from 'react';
 import { ArrowDown, ArrowUp } from 'lucide-react';
 import { Button } from '../ui/button';
+import { RequiredMark } from '../ui/field';
 
 export function ResumeInput({
   label,
@@ -10,6 +11,8 @@ export function ResumeInput({
   type = 'text',
   maxLength = 12000,
   hint,
+  required = false,
+  disabled = false,
 }: {
   label: string;
   value: string;
@@ -18,11 +21,16 @@ export function ResumeInput({
   type?: string;
   maxLength?: number;
   hint?: string;
+  required?: boolean;
+  disabled?: boolean;
 }) {
   const id = useId();
   return (
     <div className="field">
-      <label htmlFor={id}>{label}</label>
+      <label htmlFor={id}>
+        {label}
+        {required && !disabled && <RequiredMark />}
+      </label>
       {multiline ? (
         <textarea
           id={id}
@@ -31,6 +39,9 @@ export function ResumeInput({
           onChange={(event) => onChange(event.target.value)}
           rows={3}
           maxLength={maxLength}
+          required={required && !disabled}
+          disabled={disabled}
+          aria-describedby={hint ? `${id}-hint` : undefined}
         />
       ) : (
         <input
@@ -40,9 +51,16 @@ export function ResumeInput({
           onChange={(event) => onChange(event.target.value)}
           type={type}
           maxLength={maxLength}
+          required={required && !disabled}
+          disabled={disabled}
+          aria-describedby={hint ? `${id}-hint` : undefined}
         />
       )}
-      {hint && <p className="field-hint">{hint}</p>}
+      {hint && (
+        <p className="field-hint" id={`${id}-hint`}>
+          {hint}
+        </p>
+      )}
     </div>
   );
 }

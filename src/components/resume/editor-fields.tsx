@@ -1,11 +1,18 @@
 import { Plus, RefreshCw, Trash2 } from 'lucide-react';
-import { copyCareer, copyProject, moveItem, type ResumeSources } from '../../data/resume';
+import {
+  copyCareer,
+  copyProject,
+  moveItem,
+  sectionVisible,
+  type ResumeSources,
+} from '../../data/resume';
 import {
   sectionLabels,
   type ResumeAchievement,
   type ResumeDocument,
 } from '../../data/resume-schema';
 import { Button } from '../ui/button';
+import { RequiredMark } from '../ui/field';
 import { OrderButtons, ResumeCheck, ResumeInput, ResumeListInput } from './inputs';
 
 function Achievements({
@@ -82,6 +89,9 @@ export function EditorFields({
     <div className="resume-editor-fields">
       <section className="resume-edit-section">
         <h2>지원 정보</h2>
+        <p className="field-hint">
+          <RequiredMark /> 표시는 제출 시 필수 항목입니다. 작성 중인 초안은 빈 항목도 저장됩니다.
+        </p>
         <ResumeInput
           label="이력서 제목"
           value={document.title}
@@ -97,14 +107,19 @@ export function EditorFields({
           />
           <ResumeInput
             label="지원 직무"
+            required
             value={document.role}
             maxLength={300}
             onChange={(role) => change({ ...document, role })}
           />
         </div>
         <label className="field">
-          문서 종류
+          <span>
+            문서 종류
+            <RequiredMark />
+          </span>
           <select
+            required
             className="input"
             value={document.format}
             onChange={(event) =>
@@ -122,12 +137,15 @@ export function EditorFields({
         <div className="form-grid">
           <ResumeInput
             label="이름"
+            required
             value={profile.name}
             maxLength={300}
             onChange={(value) => setProfile('name', value)}
           />
           <ResumeInput
             label="이메일"
+            required={!profile.phone.trim()}
+            hint="이메일과 연락처 중 하나 이상 입력해 주세요."
             value={profile.email}
             maxLength={300}
             onChange={(value) => setProfile('email', value)}
@@ -135,6 +153,7 @@ export function EditorFields({
         </div>
         <ResumeInput
           label="연락처"
+          required={!profile.email.trim()}
           value={profile.phone}
           maxLength={300}
           onChange={(value) => setProfile('phone', value)}
@@ -255,6 +274,12 @@ export function EditorFields({
                     }[key]
                   }
                   value={career[key]}
+                  required={
+                    career.included &&
+                    sectionVisible(document, 'careers') &&
+                    (key === 'startDate' || (key === 'endDate' && !career.current))
+                  }
+                  disabled={key === 'endDate' && career.current}
                   multiline={key === 'responsibilities'}
                   type={key.endsWith('Date') ? 'month' : 'text'}
                   maxLength={key === 'responsibilities' ? 12000 : 300}
@@ -377,6 +402,14 @@ export function EditorFields({
                     }[key]
                   }
                   value={project[key]}
+                  required={
+                    project.included &&
+                    sectionVisible(document, 'projects') &&
+                    (key === 'role' ||
+                      key === 'startDate' ||
+                      (key === 'endDate' && !project.current))
+                  }
+                  disabled={key === 'endDate' && project.current}
                   type={key.endsWith('Date') ? 'month' : 'text'}
                   multiline={['summary', 'contribution', 'implementation'].includes(key)}
                   maxLength={
@@ -494,6 +527,7 @@ export function EditorFields({
                     }[key]
                   }
                   value={item[key]}
+                  required={key === 'school' && sectionVisible(document, 'education')}
                   type={key.endsWith('Date') ? 'month' : 'text'}
                   multiline={key === 'detail'}
                   maxLength={key === 'detail' ? 12000 : 300}
@@ -552,8 +586,12 @@ export function EditorFields({
         {document.qualifications.map((item) => (
           <div className="resume-entry-editor" key={item.id}>
             <label className="field">
-              분류
+              <span>
+                분류
+                <RequiredMark />
+              </span>
               <select
+                required
                 className="input"
                 value={item.category}
                 onChange={(event) =>
@@ -583,6 +621,7 @@ export function EditorFields({
                   }[key]
                 }
                 value={item[key]}
+                required={key === 'name' && sectionVisible(document, 'qualifications')}
                 type={key === 'date' ? 'month' : 'text'}
                 multiline={key === 'detail'}
                 maxLength={key === 'detail' ? 12000 : 300}
@@ -645,6 +684,7 @@ export function EditorFields({
                   { name: '언어', level: '구사 수준', test: '시험 / 점수', date: '응시 연월' }[key]
                 }
                 value={item[key]}
+                required={key === 'name' && sectionVisible(document, 'languages')}
                 maxLength={300}
                 type={key === 'date' ? 'month' : 'text'}
                 onChange={(value) =>

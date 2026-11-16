@@ -1398,7 +1398,8 @@ small {
   font-weight: 550;
 }
 .required {
-  color: #586a80;
+  color: #b42336;
+  font-weight: 700;
 }
 .input {
   width: 100%;

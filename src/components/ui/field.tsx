@@ -1,5 +1,14 @@
 import type { InputHTMLAttributes, ReactNode } from 'react';
 
+export function RequiredMark() {
+  return (
+    <span className="required" aria-hidden="true">
+      {' '}
+      *
+    </span>
+  );
+}
+
 type FieldProps = InputHTMLAttributes<HTMLInputElement> & {
   label: string;
   error?: string;
@@ -23,12 +32,7 @@ export function Field({ label, name, error, hint, multiline, required, ...props 
     <div className="field">
       <label htmlFor={id}>
         {label}
-        {required && (
-          <span className="required" aria-hidden="true">
-            {' '}
-            *
-          </span>
-        )}
+        {required && <RequiredMark />}
       </label>
       {multiline ? <textarea {...shared} rows={4} /> : <input {...props} {...shared} />}
       {hint && (

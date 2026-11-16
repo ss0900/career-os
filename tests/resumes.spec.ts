@@ -100,11 +100,11 @@ test('draft autosave, selection, order, sections, supplements, duplicate and del
   await page.getByLabel('기술스택 표시', { exact: true }).uncheck();
   await page.getByText('학력 · 자격증 · 수상 · 외국어', { exact: true }).click();
   await page.getByRole('button', { name: '학력 추가', exact: true }).click();
-  await page.getByLabel('학교명', { exact: true }).fill('가상 대학교');
+  await page.getByRole('textbox', { name: '학교명', exact: true }).fill('가상 대학교');
   await page.getByRole('button', { name: '자격증 / 수상 추가', exact: true }).click();
-  await page.getByLabel('자격증 / 수상 이름', { exact: true }).fill('가상 자격증');
+  await page.getByRole('textbox', { name: '자격증 / 수상 이름', exact: true }).fill('가상 자격증');
   await page.getByRole('button', { name: '외국어 추가', exact: true }).click();
-  await page.getByLabel('언어', { exact: true }).fill('영어');
+  await page.getByRole('textbox', { name: '언어', exact: true }).fill('영어');
   await page.getByLabel('구사 수준', { exact: true }).fill('업무 소통');
   await saved(page);
   await page.reload();
@@ -167,7 +167,7 @@ test('immutable submitted versions, source comparison and v2 backup round-trip',
   const versionId = await page.getByLabel('이력서 버전 보기').inputValue();
   await expect(page.locator('.resume-pages')).toContainText('초안에만 있는 맞춤 기여');
   await page.getByRole('button', { name: '초안으로 돌아가기' }).click();
-  await page.getByLabel('이름', { exact: true }).fill('변경한 초안 이름');
+  await page.getByRole('textbox', { name: '이름', exact: true }).fill('변경한 초안 이름');
   await saved(page);
   await page.goto('#/projects');
   await page.getByRole('button', { name: '첫 번째 프로젝트 수정', exact: true }).click();
@@ -212,21 +212,23 @@ test('navigation protects unsaved changes and accessibility stays usable', async
   const editorUrl = page.url();
   await page.clock.install();
   await page.clock.pauseAt(new Date(Date.now() + 1000));
-  await page.getByLabel('지원 직무', { exact: true }).fill('변경 중인 직무');
+  await page.getByRole('textbox', { name: '지원 직무', exact: true }).fill('변경 중인 직무');
   await page
     .getByRole('navigation', { name: '주요 메뉴' })
     .getByRole('link', { name: '프로젝트', exact: true })
     .click();
   await expect(page.getByRole('dialog')).toContainText('저장한 뒤 이동할까요');
   await page.getByRole('dialog').getByRole('button', { name: '취소' }).click();
-  await expect(page.getByLabel('지원 직무', { exact: true })).toHaveValue('변경 중인 직무');
+  await expect(page.getByRole('textbox', { name: '지원 직무', exact: true })).toHaveValue(
+    '변경 중인 직무',
+  );
   await page.clock.runFor(600);
   await saved(page);
-  await page.getByLabel('지원 직무', { exact: true }).fill('잠깐 입력한 문구');
-  await page.getByLabel('지원 직무', { exact: true }).fill('변경 중인 직무');
+  await page.getByRole('textbox', { name: '지원 직무', exact: true }).fill('잠깐 입력한 문구');
+  await page.getByRole('textbox', { name: '지원 직무', exact: true }).fill('변경 중인 직무');
   await page.clock.runFor(600);
   await saved(page);
-  await page.getByLabel('지원 직무', { exact: true }).fill('이동 전에 저장한 직무');
+  await page.getByRole('textbox', { name: '지원 직무', exact: true }).fill('이동 전에 저장한 직무');
   await page
     .getByRole('navigation', { name: '주요 메뉴' })
     .getByRole('link', { name: '프로젝트', exact: true })
@@ -235,7 +237,9 @@ test('navigation protects unsaved changes and accessibility stays usable', async
   await expect(page).toHaveURL(/#\/projects$/);
   await page.clock.resume();
   await page.goto(editorUrl);
-  await expect(page.getByLabel('지원 직무', { exact: true })).toHaveValue('이동 전에 저장한 직무');
+  await expect(page.getByRole('textbox', { name: '지원 직무', exact: true })).toHaveValue(
+    '이동 전에 저장한 직무',
+  );
   const result = await new AxeBuilder({ page })
     .withTags(['wcag2a', 'wcag2aa', 'wcag21aa'])
     .analyze();
