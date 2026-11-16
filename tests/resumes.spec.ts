@@ -150,7 +150,7 @@ test('draft autosave, selection, order, sections, supplements, duplicate and del
   ).toHaveCount(0);
 });
 
-test('immutable submitted versions, source comparison and v2 backup round-trip', async ({
+test('immutable submitted versions, source comparison and v3 backup round-trip', async ({
   page,
 }) => {
   await seed(page);
@@ -190,7 +190,7 @@ test('immutable submitted versions, source comparison and v2 backup round-trip',
   const download = await downloadEvent;
   const contents = await readFile((await download.path())!, 'utf8');
   const data = JSON.parse(contents);
-  expect(data.schemaVersion).toBe(2);
+  expect(data.schemaVersion).toBe(3);
   expect(data.data.resumes).toHaveLength(1);
   expect(data.data.resumeVersions).toHaveLength(2);
   await page.getByLabel('백업 파일', { exact: true }).setInputFiles({

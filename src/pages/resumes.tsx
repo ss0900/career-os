@@ -136,7 +136,7 @@ export function ResumesPage() {
       {deleting && (
         <ConfirmDialog
           title="이력서를 삭제할까요?"
-          description={`‘${deleting.content.title}’ 초안과 연결된 저장 버전·제출본 ${resumeVersions.filter((version) => version.resumeId === deleting.id).length}개가 함께 삭제됩니다. 원본 경력과 프로젝트는 유지됩니다. 필요한 경우 먼저 백업하세요.`}
+          description={`‘${deleting.content.title}’ 초안과 연결된 저장 버전·제출본 ${resumeVersions.filter((version) => version.resumeId === deleting.id).length}개가 함께 삭제됩니다. 지원 기록에 이미 보관한 제출 증빙과 원본 경력·프로젝트는 유지됩니다. 필요한 경우 먼저 백업하세요.`}
           onClose={() => setDeleting(null)}
           onConfirm={async () => {
             await resumeRepository.delete(deleting.id);

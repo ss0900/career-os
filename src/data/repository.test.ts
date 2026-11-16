@@ -162,7 +162,7 @@ describe('backup safety', () => {
     expect((await createBackup(database)).data).toEqual(before.data);
   });
   it('rejects oversized backups and accepts UTF-8 BOM', async () => {
-    expect(() => parseBackup(' '.repeat(MAX_BACKUP_BYTES + 1))).toThrow('5MB');
+    expect(() => parseBackup(' '.repeat(MAX_BACKUP_BYTES + 1))).toThrow('20MB');
     const backup = await createBackup(database);
     expect(parseBackup('\uFEFF' + JSON.stringify(backup))).toEqual(backup);
   });

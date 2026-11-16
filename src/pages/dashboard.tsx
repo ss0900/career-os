@@ -20,6 +20,7 @@ import { useAppData, useNotice } from '../hooks/app-context';
 import { dateLabel, errorMessage } from '../lib/utils';
 import { EmptyState, PageHeading, Tags } from '../components/common';
 import { Button } from '../components/ui/button';
+import { JobsDashboard } from '../components/jobs/dashboard';
 
 export function Dashboard() {
   const { profile, careers, projects, settings } = useAppData();
@@ -107,6 +108,7 @@ export function Dashboard() {
           </Button>
         }
       />
+      <JobsDashboard />
       <section className="welcome-banner">
         <div>
           <span className="banner-label">

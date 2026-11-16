@@ -9,6 +9,8 @@ import {
   LockKeyhole,
   Settings2,
   Sprout,
+  Search,
+  KanbanSquare,
 } from 'lucide-react';
 import {
   createHashRouter,
@@ -38,12 +40,27 @@ const ResumesPage = lazy(() =>
 const ResumeEditorPage = lazy(() =>
   import('./pages/resume-editor').then((module) => ({ default: module.ResumeEditorPage })),
 );
+const JobsPage = lazy(() => import('./pages/jobs').then((m) => ({ default: m.JobsPage })));
+const JobDetailPage = lazy(() =>
+  import('./pages/job-detail').then((m) => ({ default: m.JobDetailPage })),
+);
+const ApplicationsPage = lazy(() =>
+  import('./pages/applications').then((m) => ({ default: m.ApplicationsPage })),
+);
+const ApplicationDetailPage = lazy(() =>
+  import('./pages/application-detail').then((m) => ({ default: m.ApplicationDetailPage })),
+);
+const SubmissionPage = lazy(() =>
+  import('./pages/submission').then((m) => ({ default: m.SubmissionPage })),
+);
 
 const navigation = [
   { to: '/', label: '대시보드', icon: LayoutDashboard },
   { to: '/career', label: '내 경력', icon: BriefcaseBusiness },
   { to: '/projects', label: '프로젝트', icon: FolderKanban },
   { to: '/resumes', label: '이력서 작성', icon: FileText },
+  { to: '/jobs', label: '채용공고', icon: Search },
+  { to: '/applications', label: '지원 현황', icon: KanbanSquare },
   { to: '/settings', label: '설정 및 백업', icon: Settings2 },
 ];
 
@@ -90,10 +107,14 @@ function Layout() {
               end={to === '/'}
               key={to}
               to={to}
+              aria-label={label}
               className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}
             >
               <Icon size={19} strokeWidth={1.8} />
-              <span>{label}</span>
+              <span className="nav-label">{label}</span>
+              <span className="nav-short" aria-hidden="true">
+                {label.replace(' 작성', '').replace(' 및 백업', '')}
+              </span>
               {to === '/' && <span className="nav-active-dot" />}
             </NavLink>
           ))}
@@ -113,7 +134,7 @@ function Layout() {
           </div>
           <div className="local-label">
             <span className="status-dot" />
-            로컬 워크스페이스<span>v0.2</span>
+            로컬 워크스페이스<span>v0.3</span>
           </div>
         </div>
       </aside>
@@ -168,6 +189,11 @@ const router = createHashRouter([
       { path: 'projects', element: <ProjectsPage /> },
       { path: 'resumes', element: <ResumesPage /> },
       { path: 'resumes/:id', element: <ResumeEditorPage /> },
+      { path: 'jobs', element: <JobsPage /> },
+      { path: 'jobs/:id', element: <JobDetailPage /> },
+      { path: 'applications', element: <ApplicationsPage /> },
+      { path: 'applications/:id', element: <ApplicationDetailPage /> },
+      { path: 'applications/:id/submissions/:submissionId', element: <SubmissionPage /> },
       { path: 'settings', element: <SettingsPage /> },
       {
         path: '*',

@@ -18,7 +18,17 @@ import { useAppData, useNotice } from '../hooks/app-context';
 import { dateLabel, errorMessage } from '../lib/utils';
 
 export function SettingsPage() {
-  const { profile, careers, projects, settings, resumes, resumeVersions } = useAppData();
+  const {
+    profile,
+    careers,
+    projects,
+    settings,
+    resumes,
+    resumeVersions,
+    jobs,
+    applications,
+    events,
+  } = useAppData();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [pending, setPending] = useState<Backup | null>(null);
@@ -43,7 +53,7 @@ export function SettingsPage() {
     setError('');
     setBusy(true);
     try {
-      if (file.size > MAX_BACKUP_BYTES) throw new Error('백업 파일은 5MB 이하여야 합니다.');
+      if (file.size > MAX_BACKUP_BYTES) throw new Error('백업 파일은 20MB 이하여야 합니다.');
       setPending(parseBackup(await file.text()));
     } catch (cause) {
       setError(errorMessage(cause));
@@ -92,7 +102,8 @@ export function SettingsPage() {
             </div>
             <p className="storage-note">
               <HardDrive size={16} />
-              IndexedDB · 로컬 저장소 · 스키마 v2
+              IndexedDB · 로컬 저장소 · 스키마 v3 · 채용공고 {jobs.length}개 · 지원{' '}
+              {applications.length}개 · 일정 {events.length}개
             </p>
           </section>
           <section className="panel backup-settings">
@@ -114,7 +125,7 @@ export function SettingsPage() {
               </span>
               <div>
                 <h3>JSON 파일로 내보내기</h3>
-                <p>프로필, 경력, 프로젝트, 이력서와 제출본을 함께 보관합니다.</p>
+                <p>경력·이력서·공고·분석·지원 이력·일정·제출 증빙을 함께 보관합니다.</p>
                 <small>최근 다운로드 요청 · {dateLabel(settings?.lastBackupAt ?? undefined)}</small>
               </div>
               <Button variant="outline" onClick={() => void exportData()} disabled={busy}>
@@ -128,7 +139,7 @@ export function SettingsPage() {
               <div>
                 <h3>백업 파일 가져오기</h3>
                 <p>복원 시 현재 데이터를 백업 내용으로 교체합니다.</p>
-                <small>Career OS v1 / v2 JSON · 최대 5MB</small>
+                <small>Career OS v1 / v2 / v3 JSON · 최대 20MB</small>
               </div>
               <Button variant="outline" onClick={() => fileRef.current?.click()} disabled={busy}>
                 파일 선택
@@ -156,7 +167,7 @@ export function SettingsPage() {
           <section className="panel roadmap-panel">
             <div className="section-heading">
               <h2>Career OS 개발 로드맵</h2>
-              <span className="badge">v0.2</span>
+              <span className="badge">v0.3</span>
             </div>
             <div className="roadmap-row">
               <span className="roadmap-step complete">
@@ -176,21 +187,29 @@ export function SettingsPage() {
                 <p>맞춤 초안, A4/PDF, 불변 제출본, 버전 비교 · 현재 제공</p>
               </div>
             </div>
-            {[
-              ['03', '이직 관리', '채용공고 분석, 지원 보드, 일정 관리'],
-              ['04', '면접과 포트폴리오', 'STAR 답변, 프롬프트 생성, 공개 포트폴리오'],
-            ].map(([step, title, description]) => (
-              <div className="roadmap-row" key={step}>
-                <span className="roadmap-step">{step}</span>
-                <div>
-                  <h3>
-                    {title}
-                    <span className="planned">예정</span>
-                  </h3>
-                  <p>{description}</p>
-                </div>
+            <div className="roadmap-row">
+              <span className="roadmap-step complete">
+                <Check size={16} />
+              </span>
+              <div>
+                <h3>Phase 3 · 채용공고와 이직 관리</h3>
+                <p>JD 분석, 경험 근거, 지원 보드, 제출 증빙, 일정 · 현재 제공</p>
               </div>
-            ))}
+            </div>
+            {[['04', '면접과 포트폴리오', 'STAR 답변, 프롬프트 생성, 공개 포트폴리오']].map(
+              ([step, title, description]) => (
+                <div className="roadmap-row" key={step}>
+                  <span className="roadmap-step">{step}</span>
+                  <div>
+                    <h3>
+                      {title}
+                      <span className="planned">예정</span>
+                    </h3>
+                    <p>{description}</p>
+                  </div>
+                </div>
+              ),
+            )}
           </section>
         </div>
         <aside className="settings-aside">
@@ -221,7 +240,7 @@ export function SettingsPage() {
         <ConfirmDialog
           title="백업으로 데이터를 교체할까요?"
           confirmLabel="백업으로 교체"
-          description={`${dateLabel(pending.exportedAt)} v${pending.schemaVersion} 백업: 프로필 ${pending.data.profiles.length}개, 경력 ${pending.data.careers.length}개, 프로젝트 ${pending.data.projects.length}개, 이력서 ${pending.schemaVersion === 2 ? pending.data.resumes.length : 0}개, 보관 버전 ${pending.schemaVersion === 2 ? pending.data.resumeVersions.length : 0}개. 현재 프로필 ${profile ? 1 : 0}개, 경력 ${careers.length}개, 프로젝트 ${projects.length}개, 이력서 ${resumes.length}개와 보관 버전 ${resumeVersions.length}개가 모두 교체됩니다.${pending.schemaVersion === 1 ? ' 특히 v1 백업에는 이력서가 없으므로 현재 초안과 제출본이 모두 삭제됩니다.' : ''} 현재 데이터를 먼저 백업했는지 확인해 주세요.`}
+          description={`${dateLabel(pending.exportedAt)} v${pending.schemaVersion} 백업: 프로필 ${pending.data.profiles.length}개, 경력 ${pending.data.careers.length}개, 프로젝트 ${pending.data.projects.length}개, 이력서 ${pending.schemaVersion !== 1 ? pending.data.resumes.length : 0}개, 보관 버전 ${pending.schemaVersion !== 1 ? pending.data.resumeVersions.length : 0}개, 공고 ${pending.schemaVersion === 3 ? pending.data.jobs.length : 0}개, 지원 ${pending.schemaVersion === 3 ? pending.data.applications.length : 0}개, 일정 ${pending.schemaVersion === 3 ? pending.data.events.length : 0}개. 현재 프로필 ${profile ? 1 : 0}개, 경력 ${careers.length}개, 프로젝트 ${projects.length}개, 이력서 ${resumes.length}개와 보관 버전 ${resumeVersions.length}개, 공고 ${jobs.length}개·지원 ${applications.length}개·일정 ${events.length}개가 모두 교체됩니다.${pending.schemaVersion === 1 ? ' 특히 v1 백업에는 이력서가 없으므로 현재 초안과 제출본이 모두 삭제됩니다.' : ''}${pending.schemaVersion !== 3 ? ' v1·v2 백업에는 Phase 3 데이터가 없으므로 현재 공고·분석·지원 이력·일정·지원별 제출 증빙이 모두 삭제됩니다.' : ''} 현재 데이터를 먼저 백업했는지 확인해 주세요.`}
           onClose={() => setPending(null)}
           onConfirm={async () => {
             await restoreBackup(pending);

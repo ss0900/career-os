@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { resumeSchema, resumeVersionSchema } from './resume-schema';
+import { jobSchema, applicationSchema, eventSchema, validateJobRelations } from './jobs-schema';
 
 const shortText = z.string().trim().max(200, '200자 이내로 입력해 주세요.');
 const longText = z.string().trim().max(12000, '12,000자 이내로 입력해 주세요.');
@@ -229,11 +230,32 @@ export const backupV2Schema = z
     }
     // Source IDs belong to independent copies, so deleted originals remain valid.
   });
-export const backupSchema = z.union([backupV1Schema, backupV2Schema]);
+export const backupV3Schema = z
+  .object({
+    app: z.literal('career-os'),
+    schemaVersion: z.literal(3),
+    exportedAt: z.iso.datetime(),
+    data: backupV2Schema.shape.data
+      .extend({
+        jobs: z.array(jobSchema).max(10000),
+        applications: z.array(applicationSchema).max(10000),
+        events: z.array(eventSchema).max(30000),
+      })
+      .strict(),
+  })
+  .strict()
+  .superRefine((backup, context) => {
+    const { jobs, applications, events, ...previous } = backup.data;
+    if (!backupV2Schema.safeParse({ ...backup, schemaVersion: 2, data: previous }).success)
+      context.addIssue({ code: 'custom', message: '기존 데이터가 올바르지 않습니다.' });
+    validateJobRelations({ jobs, applications, events }, context);
+  });
+export const backupSchema = z.union([backupV1Schema, backupV2Schema, backupV3Schema]);
 export type Backup = z.infer<typeof backupSchema>;
-export type CurrentBackup = z.infer<typeof backupV2Schema>;
+export type CurrentBackup = z.infer<typeof backupV3Schema>;
 export function normalizeBackup(backup: Backup): CurrentBackup {
-  return backup.schemaVersion === 2
-    ? backup
-    : { ...backup, schemaVersion: 2, data: { ...backup.data, resumes: [], resumeVersions: [] } };
+  if (backup.schemaVersion === 3) return backup;
+  const data =
+    backup.schemaVersion === 1 ? { ...backup.data, resumes: [], resumeVersions: [] } : backup.data;
+  return { ...backup, schemaVersion: 3, data: { ...data, jobs: [], applications: [], events: [] } };
 }
