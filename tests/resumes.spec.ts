@@ -228,6 +228,35 @@ test('navigation protects unsaved changes and accessibility stays usable', async
   await page.getByRole('textbox', { name: '지원 직무', exact: true }).fill('변경 중인 직무');
   await page.clock.runFor(600);
   await saved(page);
+  // Keep the workspace list refresh pending after the final save. The editor must
+  // read the committed row even when the shared list still has the preceding draft.
+  await page.evaluate((resumeId) => {
+    const original = IDBObjectStore.prototype.getAll;
+    let hold = true;
+    IDBObjectStore.prototype.getAll = function (...args) {
+      const request = original.apply(this, args);
+      if (this.name === 'interviewAnalyses') {
+        const probe = this.transaction.objectStore('resumes').get(resumeId);
+        probe.addEventListener('success', () => {
+          if (probe.result?.content.role !== '이동 전에 저장한 직무') return;
+          document.documentElement.dataset.resumeListDelayed = 'true';
+          const keepAlive = () => {
+            if (hold) this.count().addEventListener('success', keepAlive);
+          };
+          keepAlive();
+        });
+      }
+      return request;
+    };
+    window.addEventListener(
+      'release-resume-list',
+      () => {
+        hold = false;
+        IDBObjectStore.prototype.getAll = original;
+      },
+      { once: true },
+    );
+  }, editorUrl.split('/').at(-1)!);
   await page.getByRole('textbox', { name: '지원 직무', exact: true }).fill('이동 전에 저장한 직무');
   await page
     .getByRole('navigation', { name: '주요 메뉴' })
@@ -236,10 +265,15 @@ test('navigation protects unsaved changes and accessibility stays usable', async
   await page.getByRole('dialog').getByRole('button', { name: '저장 후 이동' }).click();
   await expect(page).toHaveURL(/#\/projects$/);
   await page.clock.resume();
-  await page.goto(editorUrl);
-  await expect(page.getByRole('textbox', { name: '지원 직무', exact: true })).toHaveValue(
-    '이동 전에 저장한 직무',
-  );
+  await expect(page.locator('html')).toHaveAttribute('data-resume-list-delayed', 'true');
+  try {
+    await page.goto(editorUrl);
+    await expect(page.getByRole('textbox', { name: '지원 직무', exact: true })).toHaveValue(
+      '이동 전에 저장한 직무',
+    );
+  } finally {
+    await page.evaluate(() => window.dispatchEvent(new Event('release-resume-list')));
+  }
   const result = await new AxeBuilder({ page })
     .withTags(['wcag2a', 'wcag2aa', 'wcag21aa'])
     .analyze();

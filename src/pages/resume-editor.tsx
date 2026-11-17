@@ -1,4 +1,5 @@
 import { ArrowLeft, Copy, FileCheck2, History, Printer, Save } from 'lucide-react';
+import { useLiveQuery } from 'dexie-react-hooks';
 import { useCallback, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { Button } from '../components/ui/button';
@@ -13,6 +14,7 @@ import {
   latestSourceDocument,
 } from '../data/resume';
 import { resumeRepository } from '../data/resume-repository';
+import { db } from '../data/db';
 import type { Resume, ResumeVersion } from '../data/resume-schema';
 import { useAppData, useNotice } from '../hooks/app-context';
 import { useResumeDraft } from '../hooks/use-resume-draft';
@@ -386,8 +388,19 @@ function ResumeEditor({ initial }: { initial: Resume }) {
 
 export function ResumeEditorPage() {
   const { id } = useParams();
-  const { resumes } = useAppData();
-  const resume = resumes.find((item) => item.id === id);
+  // The workspace list may still be refreshing immediately after a saved navigation.
+  // Initialize the independent draft from the committed row, never a stale list copy.
+  const result = useLiveQuery(
+    async () => ({ id, resume: id ? await db.resumes.get(id) : undefined }),
+    [id],
+  );
+  if (!result || result.id !== id)
+    return (
+      <div className="loading-state" role="status">
+        <p>이력서를 불러오는 중입니다.</p>
+      </div>
+    );
+  const resume = result.resume;
   if (!resume)
     return (
       <section className="panel error-state">
