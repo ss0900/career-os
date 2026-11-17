@@ -47,6 +47,9 @@ export function JobDetailPage() {
       )}
       <section className="jobs-section">
         <div className="jobs-actions">
+          <Link className="text-link" to={`/interviews?job=${job.id}`}>
+            이 공고로 면접 준비
+          </Link>
           <ExternalLinkButton href={job.url}>원본 공고 열기</ExternalLinkButton>
           <Button
             disabled={action.busy}

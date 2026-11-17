@@ -2,6 +2,7 @@ import { test, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 import { emptyCareer, emptyProfile, emptyProject } from '../src/data/schema';
 import { createDocument } from '../src/data/resume';
+import { emptyJob } from '../src/data/jobs-schema';
 
 test.setTimeout(120000);
 
@@ -243,7 +244,7 @@ test('dirty dialogs protect navigation and reject a stale save from another tab'
   await other.close();
 });
 
-for (const legacyVersion of [1, 2]) {
+for (const legacyVersion of [1, 2, 3]) {
   test(`browser upgrades a real v${legacyVersion} IndexedDB without changing original rows`, async ({
     page,
   }) => {
@@ -293,7 +294,25 @@ for (const legacyVersion of [1, 2]) {
       careers: [career],
       projects: [project],
       settings: [{ id: 'settings', lastBackupAt: now }],
-      ...(legacyVersion === 2 ? { resumes: [resume], resumeVersions: [version] } : {}),
+      ...(legacyVersion >= 2 ? { resumes: [resume], resumeVersions: [version] } : {}),
+      ...(legacyVersion === 3
+        ? {
+            jobs: [
+              {
+                ...emptyJob,
+                ...meta(),
+                company: '가상 이전 공고 기업',
+                title: '기존 v3 공고',
+                role: '개발자',
+                revision: 1,
+                requirements: [],
+                analyses: [],
+              },
+            ],
+            applications: [],
+            events: [],
+          }
+        : {}),
     };
     // Playwright gives each test a fresh browser context. Do not open any user's profile.
     await page.route(
@@ -323,8 +342,15 @@ for (const legacyVersion of [1, 2]) {
                 table.createIndex('careerId', 'careerId');
                 table.createIndex('updatedAt', 'updatedAt');
                 table.createIndex('skills', 'skills', { multiEntry: true });
-              } else if (name === 'resumes') table.createIndex('updatedAt', 'updatedAt');
-              else if (name === 'resumeVersions') {
+              } else if (name === 'resumes' || name === 'jobs')
+                table.createIndex('updatedAt', 'updatedAt');
+              else if (name === 'applications') {
+                table.createIndex('jobId', 'jobId');
+                table.createIndex('updatedAt', 'updatedAt');
+              } else if (name === 'events') {
+                table.createIndex('applicationId', 'applicationId');
+                table.createIndex('date', 'date');
+              } else if (name === 'resumeVersions') {
                 table.createIndex('resumeId', 'resumeId');
                 table.createIndex('[resumeId+number]', ['resumeId', 'number'], { unique: true });
                 table.createIndex('createdAt', 'createdAt');
@@ -379,12 +405,20 @@ for (const legacyVersion of [1, 2]) {
         },
       );
     });
-    expect(after.version).toBe(30);
+    expect(after.version).toBe(40);
     for (const [name, values] of Object.entries(rows)) expect(after.rows[name]).toEqual(values);
-    for (const name of ['jobs', 'applications', 'events']) expect(after.rows[name]).toEqual([]);
+    for (const name of [
+      'preparations',
+      'questions',
+      'sessions',
+      'interviewAnalyses',
+      'portfolios',
+      'portfolioAssets',
+    ])
+      expect(after.rows[name]).toEqual([]);
     await page.goto('#/projects');
     await expect(page.getByRole('heading', { name: project.name, exact: true })).toBeVisible();
-    if (legacyVersion === 2) {
+    if (legacyVersion >= 2) {
       await page.goto(`#/resumes/${resume.id}`);
       await page.getByLabel('이력서 버전 보기').selectOption(version.id);
       await expect(page.getByText('V1 · 읽기 전용', { exact: true })).toBeVisible();

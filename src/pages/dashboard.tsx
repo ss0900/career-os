@@ -21,6 +21,7 @@ import { dateLabel, errorMessage } from '../lib/utils';
 import { EmptyState, PageHeading, Tags } from '../components/common';
 import { Button } from '../components/ui/button';
 import { JobsDashboard } from '../components/jobs/dashboard';
+import { PracticeDashboard } from '../components/interview/dashboard';
 
 export function Dashboard() {
   const { profile, careers, projects, settings } = useAppData();
@@ -109,6 +110,7 @@ export function Dashboard() {
         }
       />
       <JobsDashboard />
+      <PracticeDashboard />
       <section className="welcome-banner">
         <div>
           <span className="banner-label">

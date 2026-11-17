@@ -1,5 +1,7 @@
 import Dexie, { type Table } from 'dexie';
-import type { AppSettings, Career, Profile, Project } from './schema';
+import type { AppSettings, Career, Profile, Project, Preparation } from './schema';
+import type { Question, InterviewSession, InterviewAnalysis } from './interview-schema';
+import type { Portfolio, PortfolioAsset } from './portfolio-schema';
 import type { Resume, ResumeVersion } from './resume-schema';
 import type { Job, Application, ApplicationEvent } from './jobs-schema';
 
@@ -14,6 +16,12 @@ export class CareerDatabase extends Dexie {
   jobs!: Table<Job, string>;
   applications!: Table<Application, string>;
   events!: Table<ApplicationEvent, string>;
+  preparations!: Table<Preparation, string>;
+  questions!: Table<Question, string>;
+  sessions!: Table<InterviewSession, string>;
+  interviewAnalyses!: Table<InterviewAnalysis, string>;
+  portfolios!: Table<Portfolio, string>;
+  portfolioAssets!: Table<PortfolioAsset, string>;
 
   constructor(name = 'career-os') {
     super(name);
@@ -32,6 +40,14 @@ export class CareerDatabase extends Dexie {
       jobs: 'id, updatedAt',
       applications: 'id, jobId, updatedAt',
       events: 'id, applicationId, date',
+    });
+    this.version(4).stores({
+      preparations: 'id, createdAt',
+      questions: 'id, preparationId, updatedAt',
+      sessions: 'id, updatedAt',
+      interviewAnalyses: 'id, preparationId',
+      portfolios: 'id, updatedAt',
+      portfolioAssets: 'id, portfolioId',
     });
   }
 }

@@ -113,7 +113,7 @@ describe('resume independence and immutable versions', () => {
     await originals.deleteProfile();
     expect(project).toBeDefined();
     expect(await database.resumeVersions.get(snapshot.id)).toEqual(snapshot);
-    expect(parseBackup(JSON.stringify(await createBackup(database))).schemaVersion).toBe(3);
+    expect(parseBackup(JSON.stringify(await createBackup(database))).schemaVersion).toBe(4);
   });
   it('allocates unique version numbers and preserves prior versions', async () => {
     await seed();
@@ -193,7 +193,7 @@ describe('schema and backup compatibility', () => {
     const upgraded = new CareerDatabase(name);
     try {
       await upgraded.open();
-      expect(upgraded.verno).toBe(3);
+      expect(upgraded.verno).toBe(4);
       expect(await upgraded.profiles.get('profile')).toEqual(profile);
       expect(await upgraded.careers.get(career.id)).toEqual(career);
       expect(await upgraded.projects.get(project.id)).toEqual(project);

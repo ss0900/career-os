@@ -11,6 +11,8 @@ import {
   Sprout,
   Search,
   KanbanSquare,
+  MessagesSquare,
+  PanelsTopLeft,
 } from 'lucide-react';
 import {
   createHashRouter,
@@ -53,6 +55,21 @@ const ApplicationDetailPage = lazy(() =>
 const SubmissionPage = lazy(() =>
   import('./pages/submission').then((m) => ({ default: m.SubmissionPage })),
 );
+const InterviewsPage = lazy(() =>
+  import('./pages/interviews').then((m) => ({ default: m.InterviewsPage })),
+);
+const InterviewAnswerPage = lazy(() =>
+  import('./pages/interview-answer').then((m) => ({ default: m.InterviewAnswerPage })),
+);
+const InterviewSessionPage = lazy(() =>
+  import('./pages/interview-session').then((m) => ({ default: m.InterviewSessionPage })),
+);
+const PortfoliosPage = lazy(() =>
+  import('./pages/portfolios').then((m) => ({ default: m.PortfoliosPage })),
+);
+const PortfolioEditorPage = lazy(() =>
+  import('./pages/portfolio-editor').then((m) => ({ default: m.PortfolioEditorPage })),
+);
 
 const navigation = [
   { to: '/', label: '대시보드', icon: LayoutDashboard },
@@ -61,6 +78,8 @@ const navigation = [
   { to: '/resumes', label: '이력서 작성', icon: FileText },
   { to: '/jobs', label: '채용공고', icon: Search },
   { to: '/applications', label: '지원 현황', icon: KanbanSquare },
+  { to: '/interviews', label: '면접 준비', icon: MessagesSquare },
+  { to: '/portfolios', label: '포트폴리오', icon: PanelsTopLeft },
   { to: '/settings', label: '설정 및 백업', icon: Settings2 },
 ];
 
@@ -134,7 +153,7 @@ function Layout() {
           </div>
           <div className="local-label">
             <span className="status-dot" />
-            로컬 워크스페이스<span>v0.3</span>
+            로컬 워크스페이스<span>v0.4</span>
           </div>
         </div>
       </aside>
@@ -195,6 +214,11 @@ const router = createHashRouter([
       { path: 'applications/:id', element: <ApplicationDetailPage /> },
       { path: 'applications/:id/submissions/:submissionId', element: <SubmissionPage /> },
       { path: 'settings', element: <SettingsPage /> },
+      { path: 'interviews', element: <InterviewsPage /> },
+      { path: 'interviews/questions/:id', element: <InterviewAnswerPage /> },
+      { path: 'interviews/sessions/:id', element: <InterviewSessionPage /> },
+      { path: 'portfolios', element: <PortfoliosPage /> },
+      { path: 'portfolios/:id', element: <PortfolioEditorPage /> },
       {
         path: '*',
         element: (

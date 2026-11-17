@@ -28,6 +28,9 @@ export function SettingsPage() {
     jobs,
     applications,
     events,
+    questions,
+    sessions,
+    portfolios,
   } = useAppData();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -102,8 +105,9 @@ export function SettingsPage() {
             </div>
             <p className="storage-note">
               <HardDrive size={16} />
-              IndexedDB · 로컬 저장소 · 스키마 v3 · 채용공고 {jobs.length}개 · 지원{' '}
-              {applications.length}개 · 일정 {events.length}개
+              IndexedDB · 로컬 저장소 · 스키마 v4 · 채용공고 {jobs.length}개 · 지원{' '}
+              {applications.length}개 · 일정 {events.length}개 · 면접 질문 {questions.length}개 ·
+              세션 {sessions.length}개 · 포트폴리오 {portfolios.length}개
             </p>
           </section>
           <section className="panel backup-settings">
@@ -139,7 +143,9 @@ export function SettingsPage() {
               <div>
                 <h3>백업 파일 가져오기</h3>
                 <p>복원 시 현재 데이터를 백업 내용으로 교체합니다.</p>
-                <small>Career OS v1 / v2 / v3 JSON · 최대 20MB</small>
+                <small>
+                  Career OS v1 / v2 / v3 / v4 JSON · 최대 20MB. 이미지 파일은 제외됩니다.
+                </small>
               </div>
               <Button variant="outline" onClick={() => fileRef.current?.click()} disabled={busy}>
                 파일 선택
@@ -196,20 +202,21 @@ export function SettingsPage() {
                 <p>JD 분석, 경험 근거, 지원 보드, 제출 증빙, 일정 · 현재 제공</p>
               </div>
             </div>
-            {[['04', '면접과 포트폴리오', 'STAR 답변, 프롬프트 생성, 공개 포트폴리오']].map(
-              ([step, title, description]) => (
-                <div className="roadmap-row" key={step}>
-                  <span className="roadmap-step">{step}</span>
-                  <div>
-                    <h3>
-                      {title}
-                      <span className="planned">예정</span>
-                    </h3>
-                    <p>{description}</p>
-                  </div>
+            {[
+              [
+                '04',
+                '면접과 포트폴리오',
+                '질문 은행, STAR 버전, 모의 면접, 공개 승인 및 정적 내보내기 · 현재 제공',
+              ],
+            ].map(([step, title, description]) => (
+              <div className="roadmap-row" key={step}>
+                <span className="roadmap-step complete">{step}</span>
+                <div>
+                  <h3>{title}</h3>
+                  <p>{description}</p>
                 </div>
-              ),
-            )}
+              </div>
+            ))}
           </section>
         </div>
         <aside className="settings-aside">
@@ -240,7 +247,7 @@ export function SettingsPage() {
         <ConfirmDialog
           title="백업으로 데이터를 교체할까요?"
           confirmLabel="백업으로 교체"
-          description={`${dateLabel(pending.exportedAt)} v${pending.schemaVersion} 백업: 프로필 ${pending.data.profiles.length}개, 경력 ${pending.data.careers.length}개, 프로젝트 ${pending.data.projects.length}개, 이력서 ${pending.schemaVersion !== 1 ? pending.data.resumes.length : 0}개, 보관 버전 ${pending.schemaVersion !== 1 ? pending.data.resumeVersions.length : 0}개, 공고 ${pending.schemaVersion === 3 ? pending.data.jobs.length : 0}개, 지원 ${pending.schemaVersion === 3 ? pending.data.applications.length : 0}개, 일정 ${pending.schemaVersion === 3 ? pending.data.events.length : 0}개. 현재 프로필 ${profile ? 1 : 0}개, 경력 ${careers.length}개, 프로젝트 ${projects.length}개, 이력서 ${resumes.length}개와 보관 버전 ${resumeVersions.length}개, 공고 ${jobs.length}개·지원 ${applications.length}개·일정 ${events.length}개가 모두 교체됩니다.${pending.schemaVersion === 1 ? ' 특히 v1 백업에는 이력서가 없으므로 현재 초안과 제출본이 모두 삭제됩니다.' : ''}${pending.schemaVersion !== 3 ? ' v1·v2 백업에는 Phase 3 데이터가 없으므로 현재 공고·분석·지원 이력·일정·지원별 제출 증빙이 모두 삭제됩니다.' : ''} 현재 데이터를 먼저 백업했는지 확인해 주세요.`}
+          description={`${dateLabel(pending.exportedAt)} v${pending.schemaVersion} 백업: 프로필 ${pending.data.profiles.length}개, 경력 ${pending.data.careers.length}개, 프로젝트 ${pending.data.projects.length}개, 이력서 ${pending.schemaVersion !== 1 ? pending.data.resumes.length : 0}개, 보관 버전 ${pending.schemaVersion !== 1 ? pending.data.resumeVersions.length : 0}개, 공고 ${'jobs' in pending.data ? pending.data.jobs.length : 0}개, 지원 ${'applications' in pending.data ? pending.data.applications.length : 0}개, 일정 ${'events' in pending.data ? pending.data.events.length : 0}개, 질문 ${pending.schemaVersion === 4 ? pending.data.questions.length : 0}개, 세션 ${pending.schemaVersion === 4 ? pending.data.sessions.length : 0}개, 포트폴리오 ${pending.schemaVersion === 4 ? pending.data.portfolios.length : 0}개. 현재 프로필 ${profile ? 1 : 0}개, 경력 ${careers.length}개, 프로젝트 ${projects.length}개, 이력서 ${resumes.length}개와 보관 버전 ${resumeVersions.length}개, 공고 ${jobs.length}개·지원 ${applications.length}개·일정 ${events.length}개·질문 ${questions.length}개·세션 ${sessions.length}개·포트폴리오 ${portfolios.length}개가 모두 교체됩니다.${pending.schemaVersion === 1 ? ' 특히 v1 백업에는 이력서가 없으므로 현재 초안과 제출본이 모두 삭제됩니다.' : ''}${pending.schemaVersion < 3 ? ' v1·v2 백업에는 Phase 3 데이터가 없으므로 현재 공고·분석·지원 이력·일정·지원별 제출 증빙이 모두 삭제됩니다.' : ''}${pending.schemaVersion !== 4 ? ' v1~v3에는 면접·포트폴리오 데이터가 없으므로 질문·답변 버전·세션·피드백·포트폴리오·공개 이력이 모두 삭제됩니다.' : ''} 모든 버전의 JSON에는 이미지 파일이 없습니다. 현재 이미지 파일도 제거되므로 먼저 포트폴리오의 이미지 별도 백업을 받고 복원 후 다시 연결하세요. 현재 데이터를 먼저 백업했는지 확인해 주세요.`}
           onClose={() => setPending(null)}
           onConfirm={async () => {
             await restoreBackup(pending);

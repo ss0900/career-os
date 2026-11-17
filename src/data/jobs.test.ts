@@ -175,7 +175,7 @@ describe('applications, submissions and events', () => {
     app = await repo.submit(app.id, app.revision, '2026-11-16', '뒤늦게 보관한 제출 내역', null);
     expect(app.stage).toBe('면접 진행');
     expect(app.history).toEqual(history);
-    expect(parseBackup(JSON.stringify(await createBackup(db))).schemaVersion).toBe(3);
+    expect(parseBackup(JSON.stringify(await createBackup(db))).schemaVersion).toBe(4);
   });
   it('copies tailored drafts and saves date-only events without inventing times', async () => {
     const { job } = await seeded();
@@ -250,7 +250,7 @@ describe('v3 database and backups', () => {
     const next = new CareerDatabase(name);
     try {
       await next.open();
-      expect(next.verno).toBe(3);
+      expect(next.verno).toBe(4);
       for (const key of ['profiles', 'careers', 'projects', 'resumes', 'resumeVersions'] as const)
         expect(await next.table(key).toArray()).toEqual(before.data[key]);
       expect((await next.settings.get('settings'))!.lastBackupAt).toBe('2026-11-16T00:00:00.000Z');
@@ -267,7 +267,14 @@ describe('v3 database and backups', () => {
     await repo.deleteJob(job.id);
     await restoreBackup(parseBackup(JSON.stringify(before)), db);
     expect((await createBackup(db)).data).toEqual(before.data);
-    const { jobs, applications, events, ...oldData } = before.data;
+    const { jobs, applications, events } = before.data;
+    const oldData = {
+      profiles: before.data.profiles,
+      careers: before.data.careers,
+      projects: before.data.projects,
+      resumes: before.data.resumes,
+      resumeVersions: before.data.resumeVersions,
+    };
     expect(jobs.length + applications.length + events.length).toBeGreaterThan(0);
     const v2 = backupV2Schema.parse({ ...before, schemaVersion: 2, data: oldData });
     await restoreBackup(parseBackup(JSON.stringify(v2)), db);

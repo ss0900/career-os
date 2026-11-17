@@ -47,6 +47,9 @@ export function ApplicationDetailPage() {
       )}
       <section className="jobs-section">
         <div className="jobs-actions">
+          <Link className="text-link" to={`/interviews?application=${app.id}`}>
+            제출본으로 면접 준비
+          </Link>
           {app.jobId && (
             <Link className="text-link" to={`/jobs/${app.jobId}`}>
               공고와 요구사항 검토

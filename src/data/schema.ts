@@ -1,6 +1,13 @@
 import { z } from 'zod';
 import { resumeSchema, resumeVersionSchema } from './resume-schema';
 import { jobSchema, applicationSchema, eventSchema, validateJobRelations } from './jobs-schema';
+import {
+  preparationBase,
+  questionSchema,
+  sessionSchema,
+  interviewAnalysisSchema,
+} from './interview-schema';
+import { portfolioSchema } from './portfolio-schema';
 
 const shortText = z.string().trim().max(200, '200자 이내로 입력해 주세요.');
 const longText = z.string().trim().max(12000, '12,000자 이내로 입력해 주세요.');
@@ -250,12 +257,65 @@ export const backupV3Schema = z
       context.addIssue({ code: 'custom', message: '기존 데이터가 올바르지 않습니다.' });
     validateJobRelations({ jobs, applications, events }, context);
   });
-export const backupSchema = z.union([backupV1Schema, backupV2Schema, backupV3Schema]);
+export const preparationSchema = preparationBase.extend({
+  careers: z.array(careerSchema).max(200),
+  projects: z.array(projectSchema).max(500),
+});
+export type Preparation = z.infer<typeof preparationSchema>;
+export const backupV4Schema = z
+  .object({
+    app: z.literal('career-os'),
+    schemaVersion: z.literal(4),
+    exportedAt: z.iso.datetime(),
+    data: backupV3Schema.shape.data
+      .extend({
+        preparations: z.array(preparationSchema).max(3000),
+        questions: z.array(questionSchema).max(10000),
+        sessions: z.array(sessionSchema).max(3000),
+        interviewAnalyses: z.array(interviewAnalysisSchema).max(3000),
+        portfolios: z.array(portfolioSchema).max(1000),
+      })
+      .strict(),
+  })
+  .strict()
+  .superRefine((backup, ctx) => {
+    const { preparations, questions, sessions, interviewAnalyses, portfolios, ...older } =
+      backup.data;
+    if (!backupV3Schema.safeParse({ ...backup, schemaVersion: 3, data: older }).success)
+      ctx.addIssue({ code: 'custom', message: '기존 데이터가 올바르지 않습니다.' });
+    for (const rows of [preparations, questions, sessions, interviewAnalyses, portfolios])
+      if (new Set(rows.map((v) => v.id)).size !== rows.length)
+        ctx.addIssue({ code: 'custom', message: '중복된 Phase 4 ID입니다.' });
+    const ids = new Set(preparations.map((v) => v.id));
+    for (const row of [...questions, ...sessions.map((s) => s.content), ...interviewAnalyses])
+      if (row.preparationId && !ids.has(row.preparationId))
+        ctx.addIssue({ code: 'custom', message: '연결된 면접 준비 자료가 없습니다.' });
+    // Session question IDs and source IDs are historical; their independent copies survive deletion.
+  });
+export const backupSchema = z.union([
+  backupV1Schema,
+  backupV2Schema,
+  backupV3Schema,
+  backupV4Schema,
+]);
 export type Backup = z.infer<typeof backupSchema>;
-export type CurrentBackup = z.infer<typeof backupV3Schema>;
+export type CurrentBackup = z.infer<typeof backupV4Schema>;
 export function normalizeBackup(backup: Backup): CurrentBackup {
-  if (backup.schemaVersion === 3) return backup;
+  if (backup.schemaVersion === 4) return backup;
   const data =
     backup.schemaVersion === 1 ? { ...backup.data, resumes: [], resumeVersions: [] } : backup.data;
-  return { ...backup, schemaVersion: 3, data: { ...data, jobs: [], applications: [], events: [] } };
+  const phase3 =
+    backup.schemaVersion === 3 ? backup.data : { ...data, jobs: [], applications: [], events: [] };
+  return {
+    ...backup,
+    schemaVersion: 4,
+    data: {
+      ...phase3,
+      preparations: [],
+      questions: [],
+      sessions: [],
+      interviewAnalyses: [],
+      portfolios: [],
+    },
+  };
 }

@@ -1,7 +1,7 @@
 import { db, type CareerDatabase } from './db';
 import {
   backupSchema,
-  backupV3Schema,
+  backupV4Schema,
   normalizeBackup,
   type Backup,
   type CurrentBackup,
@@ -21,16 +21,16 @@ export function parseBackup(text: string): Backup {
   const result = backupSchema.safeParse(value);
   if (!result.success)
     throw new Error(
-      '지원하지 않는 백업 버전 또는 잘못된 데이터입니다. Career OS v1 / v2 / v3 백업 파일인지 확인해 주세요.',
+      '지원하지 않는 백업 버전 또는 잘못된 데이터입니다. Career OS v1 / v2 / v3 / v4 백업 파일인지 확인해 주세요.',
     );
   return result.data;
 }
 
 export async function createBackup(database: CareerDatabase = db): Promise<CurrentBackup> {
   return database.transaction('r', database.tables, async () =>
-    backupV3Schema.parse({
+    backupV4Schema.parse({
       app: 'career-os',
-      schemaVersion: 3,
+      schemaVersion: 4,
       exportedAt: new Date().toISOString(),
       data: {
         profiles: await database.profiles.toArray(),
@@ -41,6 +41,11 @@ export async function createBackup(database: CareerDatabase = db): Promise<Curre
         jobs: await database.jobs.toArray(),
         applications: await database.applications.toArray(),
         events: await database.events.toArray(),
+        preparations: await database.preparations.toArray(),
+        questions: await database.questions.toArray(),
+        sessions: await database.sessions.toArray(),
+        interviewAnalyses: await database.interviewAnalyses.toArray(),
+        portfolios: await database.portfolios.toArray(),
       },
     }),
   );
@@ -58,6 +63,12 @@ export async function restoreBackup(input: Backup, database: CareerDatabase = db
     await database.jobs.clear();
     await database.applications.clear();
     await database.events.clear();
+    await database.preparations.clear();
+    await database.questions.clear();
+    await database.sessions.clear();
+    await database.interviewAnalyses.clear();
+    await database.portfolios.clear();
+    await database.portfolioAssets.clear();
     await database.profiles.bulkAdd(backup.data.profiles);
     await database.careers.bulkAdd(backup.data.careers);
     await database.projects.bulkAdd(backup.data.projects);
@@ -66,6 +77,11 @@ export async function restoreBackup(input: Backup, database: CareerDatabase = db
     await database.jobs.bulkAdd(backup.data.jobs);
     await database.applications.bulkAdd(backup.data.applications);
     await database.events.bulkAdd(backup.data.events);
+    await database.preparations.bulkAdd(backup.data.preparations);
+    await database.questions.bulkAdd(backup.data.questions);
+    await database.sessions.bulkAdd(backup.data.sessions);
+    await database.interviewAnalyses.bulkAdd(backup.data.interviewAnalyses);
+    await database.portfolios.bulkAdd(backup.data.portfolios);
     await database.settings.put({ id: 'settings', lastBackupAt: null });
   });
 }

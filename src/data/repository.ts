@@ -21,6 +21,11 @@ export function createRepository(database: CareerDatabase) {
         jobs: await database.jobs.orderBy('updatedAt').reverse().toArray(),
         applications: await database.applications.orderBy('updatedAt').reverse().toArray(),
         events: await database.events.orderBy('date').toArray(),
+        preparations: await database.preparations.orderBy('createdAt').reverse().toArray(),
+        questions: await database.questions.orderBy('updatedAt').reverse().toArray(),
+        sessions: await database.sessions.orderBy('updatedAt').reverse().toArray(),
+        interviewAnalyses: await database.interviewAnalyses.toArray(),
+        portfolios: await database.portfolios.orderBy('updatedAt').reverse().toArray(),
       }));
     },
     async saveProfile(input: ProfileInput) {
